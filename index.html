@@ -41,9 +41,9 @@
                         <th id="th-name">Name</th>
                         <th id="th-symbol">Symbol</th>
                         <th id="th-price">Price</th>
-                        <th id="th-owned">Owned</th>
+                        <th id="th-balance">Balance</th>
                         <th id="th-value">Value</th>
-                        <th id="th-spent">Amount Spent</th>
+                        <th id="th-cost">Cost</th>
                         <th id="th-net">Net</th>
                         <th id="th-actions"></th>
                     </thead>
@@ -53,7 +53,7 @@
                     <tfoot>
                         <td colspan="4" class="text-right">Total:</td>
                         <td id="value-total">$<span class="number"></span></td>
-                        <td id="spent-total">$<span class="number"></span></td>
+                        <td id="cost-total">$<span class="number"></span></td>
                         <td colspan="2" id="net-total">$<span class="number"></span></td>
                     </tfoot>
                 </table>
@@ -68,9 +68,9 @@
                 <td class="name">{{currency_name}}</td>
                 <td class="symbol">{{currency_symbol}}</td>
                 <td class="price">$<span class="number">{{currency_price}}</span></td>
-                <td class="owned"><input type="number" value="" class="currency-owned" name="{{currency_id}}"></td>
+                <td class="balance"><input type="number" value="" class="balance-input" name="{{currency_id}}"></td>
                 <td class="value">$<span class="number"></span></td>
-                <td class="spent"><input type="number" value="" class="amount-spent" name="spent" data-id="{{currency_id}}"></td>
+                <td class="cost"><input type="number" value="" class="cost-input" name="cost" data-id="{{currency_id}}"></td>
                 <td class="net">$<span class="number"></span></td>
                 <td class="actions text-right">
                     <a href="#" role="button" class="btn btn-danger btn-xs remove" title="Remove {{currency_name}}" data-id="{{currency_id}}"><span class="fa fa-times"></span></a>

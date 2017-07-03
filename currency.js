@@ -18,6 +18,7 @@ var Currency = function(id) {
         self.name = ticker.name;
         self.symbol = ticker.symbol;
     }).fail(function(jqXHR, textStatus, errorThrown) {
+        console.log('hi' + self.id);
         console.log(jqXHR);
         console.log(textStatus);
         console.log(errorThrown);
@@ -43,6 +44,24 @@ var Currency = function(id) {
     }
     this.getNet = function() {
         return parseFloat($(this.elementName + ' .net .number').html() || 0);
+    }
+
+    this.updateNet = function() {
+        var value = this.getValue();
+        var cost = this.getCost();
+        var net = (value - cost).toFixed(2);
+        $(this.elementName + ' .net .number').html(net);
+        $(this.elementName + ' .net .percent').html(parseInt(net / cost * 100));
+    }
+    this.updatePrice = function(callback) {
+        var self = this;
+        this.getPrice('USD').done(function() {
+            var price = self.prices.usd;
+            $(self.elementName + ' .price .number').html(price);
+            $(self.elementName + ' .value .number').html((price * self.getBalance()).toFixed(2));
+            self.updateNet();
+            callback();
+        });
     }
 }
 
@@ -96,7 +115,7 @@ $(function($) {
                 if (state !== undefined) {
                     currency.setBalance(state.balance);
                     currency.setCost(state.cost);
-                    updatePrice(currencyId);
+                    currency.updatePrice(updateTotal);
                 }
             });
         }
@@ -107,30 +126,17 @@ $(function($) {
             updateTotal();
         }
 
-        var updatePrice = function(currencyId) {
-            var currency = self.currencies[currencyId];
-            currency.getPrice('USD').done(function() {
-                var price = currency.prices.usd;
-                $('#id-' + currencyId + ' .price .number').html(price);
-                var balance = currency.getBalance();
-                $('#id-' + currencyId + ' .value .number').html((price * balance).toFixed(2));
-                updateNet(currencyId);
-                updateTotal();
-            });
-        }
-
         var updateNet = function(currencyId) {
             var currency = self.currencies[currencyId];
-            var value = parseFloat($('#id-' + currencyId + ' .value .number').html());
-            var cost = currency.getCost();
-            $('#id-' + currencyId + ' .net .number').html((value - cost).toFixed(2));
+            currency.updateNet();
             updateTotal();
         }
 
         var updateTotal = function() {
-            var totalCol = $('#value-total .number');
-            var costCol = $('#cost-total .number');
-            var netCol = $('#net-total .number');
+            var totalEle = $('#value-total .number');
+            var costEle = $('#cost-total .number');
+            var netEle = $('#net-total .number');
+            var gainEle = $('#net-total .percent');
             var total = 0.0;
             var cost = 0.0;
             var net = 0.0;
@@ -139,9 +145,10 @@ $(function($) {
                 cost += this.getCost();
                 net += this.getNet();
             });
-            totalCol.html(total.toFixed(2));
-            costCol.html(cost.toFixed(2));
-            netCol.html(net.toFixed(2));
+            totalEle.html(total.toFixed(2));
+            costEle.html(cost.toFixed(2));
+            netEle.html(net.toFixed(2));
+            gainEle.html(parseInt(net / cost * 100));
         }
 
         self.loadState = function() {
@@ -169,7 +176,10 @@ $(function($) {
         self.loadState();
 
         $('#refresh-prices').on('click', function() {
-            self.loadState();
+            $.each(self.currencies, function() {
+                this.updatePrice(updateTotal);
+            });
+            return false;
         });
 
         return self.on('click', '#add-currency', function() {
@@ -183,8 +193,9 @@ $(function($) {
         })
         .on('change', '.balance-input', function() {
             var currencyId = $(this).attr('name');
+            var currency = self.currencies[currencyId];
             self.saveState();
-            updatePrice(currencyId);
+            currency.updatePrice(updateTotal);
         })
         .on('change', '.cost-input', function() {
             var currencyId = $(this).data('id');

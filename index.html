@@ -30,33 +30,34 @@
         </nav>
         <div class="container">
             <form id="currency-form" method="post" action="" class="form-inline">
-                <div id="currency-list" class="pull-right">
-                    <select id="currency-select" name="currency-select" class="form-control">
-
-                    </select>
-                    <button type="button" class="btn btn-primary btn-sm" id="add-currency">Add Currency</button>
+                <div id="currency-list" class="input-group">
+                    <select id="currency-select" name="currency-select" class="form-control"></select>
+                    <span class="input-group-btn"><button id="add-currency" type="button" class="btn btn-primary">Add Currency</button></span>
                 </div>
-                <table class="table">
-                    <thead>
-                        <th id="th-name">Name</th>
-                        <th id="th-symbol">Symbol</th>
-                        <th id="th-price">Price</th>
-                        <th id="th-balance">Balance</th>
-                        <th id="th-value">Value</th>
-                        <th id="th-cost">Cost</th>
-                        <th id="th-net">Net</th>
-                        <th id="th-actions"></th>
-                    </thead>
-                    <tbody id="currency-rows">
+                <div class="table-responsive">
+                    <table id="currency-table" class="table">
+                        <thead>
+                            <th id="th-expand"></th>
+                            <th id="th-name">Name</th>
+                            <th id="th-symbol">Symbol</th>
+                            <th id="th-price">Price</th>
+                            <th id="th-balance">Balance</th>
+                            <th id="th-value">Value</th>
+                            <th id="th-cost">Cost</th>
+                            <th id="th-net">Net</th>
+                            <th id="th-actions"></th>
+                        </thead>
+                        <tbody id="currency-rows">
 
-                    </tbody>
-                    <tfoot>
-                        <td colspan="4" class="text-right">Total:</td>
-                        <td id="value-total">$<span class="number"></span></td>
-                        <td id="cost-total">$<span class="number"></span></td>
-                        <td colspan="2" id="net-total">$<span class="number"></span></td>
-                    </tfoot>
-                </table>
+                        </tbody>
+                        <tfoot>
+                            <td colspan="5" class="text-right">Total:</td>
+                            <td id="value-total">$<span class="number"></span></td>
+                            <td id="cost-total">$<span class="number"></span></td>
+                            <td colspan="2" id="net-total">$<span class="number"></span> (<span class="percent"></span>% gain)</td>
+                        </tfoot>
+                    </table>
+                </div>
             </form>
         </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.8/handlebars.min.js" integrity="sha256-4d88O9e7pCb/y6LHNiCfPQAutcLvYzg+TdjCYR5bMr0=" crossorigin="anonymous"></script>
@@ -65,14 +66,16 @@
         <script src="https://use.fontawesome.com/566cca0527.js"></script>
         <script id="currency-template" type="text/x-handlebars-template">
             <tr id="id-{{currency_id}}" class="currency">
-                <td class="name">{{currency_name}}</td>
-                <td class="symbol">{{currency_symbol}}</td>
-                <td class="price">$<span class="number">{{currency_price}}</span></td>
-                <td class="balance"><input type="number" value="" class="balance-input" name="{{currency_id}}"></td>
-                <td class="value">$<span class="number"></span></td>
-                <td class="cost"><input type="number" value="" class="cost-input" name="cost" data-id="{{currency_id}}"></td>
-                <td class="net">$<span class="number"></span></td>
+                <td class="expand"><a href="#" class="expand" title="Expand {{currency_name}} Transactions"><span class="fa fa-angle-down"></span></a>
+                <td class="name" data-title="Name">{{currency_name}}</td>
+                <td class="symbol" data-title="Symbol">{{currency_symbol}}</td>
+                <td class="price" data-title="Price">$<span class="number">{{currency_price}}</span></td>
+                <td class="balance" data-title="Balance"><input type="number" value="" class="balance-input" name="{{currency_id}}"></td>
+                <td class="value" data-title="Value">$<span class="number"></span></td>
+                <td class="cost" data-title="Cost"><input type="number" value="" class="cost-input" name="cost" data-id="{{currency_id}}"></td>
+                <td class="net" data-title="Net">$<span class="number"></span> (<span class="percent"></span>% gain)</td>
                 <td class="actions text-right">
+                    <a href="#" role="button" class="btn btn-success btn-xs add" title="Add {{currency_name}} Transaction" data-id="{{currency_id}}"><span class="fa fa-plus"></span></a>
                     <a href="#" role="button" class="btn btn-danger btn-xs remove" title="Remove {{currency_name}}" data-id="{{currency_id}}"><span class="fa fa-times"></span></a>
                 </td>
             </tr>

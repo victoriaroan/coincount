@@ -2,6 +2,12 @@ body {
     padding-top: 70px;
 }
 
+#currency-table thead th {
+    background-color: #444;
+    color: #efefef;
+    text-transform: uppercase;
+}
+
 @media only screen and (max-width: 800px) {
 	#currency-table,
 	#currency-table thead,
@@ -12,7 +18,7 @@ body {
 		display: block;
 	}
 
-	#currency-table thead tr { 
+	#currency-table thead tr {
 		position: absolute;
 		top: -9999px;
 		left: -9999px;

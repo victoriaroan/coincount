@@ -1,52 +1,69 @@
-var Transaction = function(id, currencyId) {
-    var self = this;
+var Transaction = function(id, currencyId, state) {
     if (!(this instanceof Transaction)) {
         return new Transaction(id, currencyId);
     }
+    var self = this;
+    var template = Handlebars.compile($('#transaction-template').html());
     this.id = id;
     this.currencyId = currencyId;
     this.elementName = '#id-' + this.currencyId + '-' + this.id;
 
-    this.getElement = function() {
-        return $(this.elementName);
+    this.element = $(template({
+        currency_id: this.currencyId,
+        transaction_id: this.id
+    }));
+    this.element.data('transaction', self);
+    if (state !== undefined) {
+        this.setAmount(state.amount);
+        this.setCost(state.cost);
+        this.setDate(state.date);
     }
 
-    this.toJSON = function() {
+    /** Events **/
+    $(document).on('change', this.elementName + ' .amount-input', function() {
+        self.element.trigger('ca.trans.updated');
+    });
+    $(document).on('change', this.elementName + ' .cost-input', function() {
+        self.element.trigger('ca.trans.updated');
+    });
+    $(document).on('change', this.elementName + ' .date-input', function() {
+        self.element.trigger('ca.trans.date.changed');
+    });
+}
+
+$.extend(Transaction.prototype, {
+    toJSON: function() {
         return {
             id: this.id,
             amount: this.getAmount(),
             cost: this.getCost(),
             date: this.getDate()
         }
-    }
+    },
 
     /** Data Functions **/
-    this.getAmount = function() {
-        return parseFloat($(this.elementName + ' .amount-input').val() || 0);
+    getAmount: function() {
+        return parseFloat(this.element.find('.amount-input').val() || 0);
+    },
+    setAmount: function(value) {
+        this.element.find('.amount-input').val(value);
+        this.element.trigger('ca.trans.updated');
+    },
+    getCost: function() {
+        return parseFloat(this.element.find('.cost-input').val() || 0);
+    },
+    setCost: function(value) {
+        this.element.find('.cost-input').val(value);
+        this.element.trigger('ca.trans.updated');
+    },
+    getDate: function() {
+        return this.element.find('.date-input').val();
+    },
+    setDate: function(value) {
+        this.element.find('.date-input').val(value);
+        this.element.trigger('ca.trans.date.changed');
     }
-    this.setAmount = function(value) {
-        $(this.elementName + ' .amount-input').val(value);
-        self.getElement().trigger('ca.trans.updated');
-    }
-    this.getCost = function() {
-        return parseFloat($(this.elementName + ' .cost-input').val() || 0);
-    }
-    this.setCost = function(value) {
-        $(this.elementName + ' .cost-input').val(value);
-        self.getElement().trigger('ca.trans.updated');
-    }
-    this.getDate = function() {
-        return $(this.elementName + ' .date-input').val();
-    }
-
-    /** Events **/
-    $(document).on('change', this.elementName + ' .amount-input', function() {
-        self.getElement().trigger('ca.trans.updated');
-    });
-    $(document).on('change', this.elementName + ' .cost-input', function() {
-        self.getElement().trigger('ca.trans.updated');
-    });
-}
+});
 
 var Currency = function(id, name, symbol, state) {
     var self = this;
@@ -64,23 +81,22 @@ var Currency = function(id, name, symbol, state) {
     this.elementName = '#id-' + this.id;
 
     this.element = $(template({
-        currency_id: self.id,
-        currency_name: self.name,
-        currency_symbol: self.symbol
+        currency_id: this.id,
+        currency_name: this.name,
+        currency_symbol: this.symbol
     }));
     this.element.data('currency', self);
 
     if (state !== undefined) {
-        // currency.setBalance(state.balance);
-        // currency.setCost(state.cost);
-        // currency.updatePrice(updateTotal);
-        self.element.trigger('ca.currency.loaded');
+        self.lastTransactionId = state.lastTransactionId;
+        for (var i = 0; i < state.transactions.length; i++) {
+            this.addTransaction(state.transactions[i]);
+        }
     } else {
-        self.addTransaction();
-        self.element.trigger('ca.currency.added');
+        this.addTransaction();
     }
 
-    self.updatePrice();
+    this.update();
 
     /** Events **/
     $(document).on('click', this.elementName + ' a.add-transaction', function() {
@@ -117,7 +133,7 @@ $.extend(Currency.prototype, {
     updatePrice: function() {
         var self = this;
         self.getPrice('USD').done(function() {
-            $(self.elementName + ' .price .number').html(self.prices.usd);
+            self.element.find('.price .number').html(self.prices.usd);
             self.updateValue();
             self.updateNet();
             self.element.trigger('ca.currency.price.updated');
@@ -127,18 +143,16 @@ $.extend(Currency.prototype, {
     getTransaction: function(tId) {
         return $.grep(this.transactions, function (e) { return e.id === tId })[0];
     },
-    addTransaction: function() {
-        var tId = this.lastTransactionId + 1;
-        var transaction = new Transaction(tId, this.id);
-        var transactionTemplate = Handlebars.compile($('#transaction-template').html());
-        this.lastTransactionId = tId;
+    addTransaction: function(state) {
+        if (state !== undefined) {
+            var transaction = new Transaction(state.id, this.id, state);
+        } else {
+            this.lastTransactionId++;
+            var transaction = new Transaction(this.lastTransactionId, this.id);
+        }
         this.transactions.push(transaction);
-        this.element.append(transactionTemplate({
-            currency_id: this.id,
-            transaction_id: tId
-        }));
-        $(transaction.elementName).data('transaction', transaction);
-        $(transaction.elementName + ' .amount-input').focus();
+        this.element.append(transaction.element);
+        this.element.find('.amount-input').focus();
         this.element.trigger('ca.trans.added');
     },
     removeTransaction: function(tId) {
@@ -149,49 +163,49 @@ $.extend(Currency.prototype, {
     },
 
     getBalance: function() {
-        return parseFloat($(this.elementName + ' .balance').html() || 0);
+        return parseFloat(this.element.find('.balance').html() || 0);
     },
     updateBalance: function() {
         var bal = 0;
         $.each(this.transactions, function(index, transaction) {
             bal += transaction.getAmount();
         });
-        $(this.elementName + ' .balance').html(bal);
+        this.element.find('.balance').html(bal);
     },
 
     getCost: function() {
-        return parseFloat($(this.elementName + ' .cost .number').html() || 0);
+        return parseFloat(this.element.find('.cost .number').html() || 0);
     },
     updateCost: function(value) {
         var cost = 0;
         $.each(this.transactions, function(index, transaction) {
             cost += transaction.getCost();
         });
-        $(this.elementName + ' .cost .number').html(cost);
+        this.element.find('.cost .number').html(cost);
     },
 
     getValue: function() {
-        return parseFloat($(this.elementName + ' .value .number').html() || 0);
+        return parseFloat(this.element.find('.value .number').html() || 0);
     },
     updateValue: function() {
-        $(this.elementName + ' .value .number').html((this.prices.usd * this.getBalance()).toFixed(2));
+        this.element.find('.value .number').html((this.prices.usd * this.getBalance()).toFixed(2));
     },
 
     getNet: function() {
-        return parseFloat($(this.elementName + ' .net .number').html() || 0);
+        return parseFloat(this.element.find('.net .number').html() || 0);
     },
     updateNet: function() {
         var value = this.getValue();
         var cost = this.getCost();
         var net = (value - cost).toFixed(2);
-        $(this.elementName + ' .net .number').html(net);
-        $(this.elementName + ' .net .percent').html(parseInt(net / cost * 100) || 100);
+        this.element.find('.net .number').html(net);
+        this.element.find('.net .percent').html(parseInt(net / cost * 100) || 100);
     },
 
     update: function() {
+        this.updatePrice();
         this.updateBalance();
         this.updateCost();
-        this.updatePrice();
         this.element.trigger('ca.currency.updated');
     },
 
@@ -212,7 +226,7 @@ $(function($) {
         self.currencies = {};
 
         var loadCurrencies = function() {
-            $.ajax({
+            return $.ajax({
                 url: 'https://api.coinmarketcap.com/v1/ticker/',
             }).done(function(data) {
                 var currencySelect = $('#currency-select');
@@ -228,6 +242,11 @@ $(function($) {
             var currency = new Currency(currencyId, option.data('name'), option.data('symbol'), state);
             self.currencies[currencyId] = currency;
             $('#currency-table').append(currency.element);
+            if (state !== undefined) {
+                self.trigger('ca.currency.loaded');
+            } else {
+                self.trigger('ca.currency.added');
+            }
         }
 
         var removeCurrency = function(currencyId) {
@@ -262,20 +281,23 @@ $(function($) {
 
         self.loadState = function() {
             var state = JSON.parse(localStorage.getItem(storageId));
+            console.log(state);
             // $('#currency-rows').empty();
-            // for (var currency in state) {
-            //     if (state.hasOwnProperty(currency)) {
-            //         addCurrency(currency, state[currency]);
-            //     }
-            // }
+            for (var currency in state) {
+                if (state.hasOwnProperty(currency)) {
+                    addCurrency(currency, state[currency]);
+                }
+            }
         }
 
         self.saveState = function() {
+            console.log(JSON.stringify(self.currencies));
             localStorage.setItem(storageId, JSON.stringify(self.currencies));
         }
 
-        loadCurrencies();
-        self.loadState();
+        loadCurrencies().done(function() {
+            self.loadState();
+        });
 
         $('#refresh-prices').on('click', function() {
             $.each(self.currencies, function() {
@@ -301,6 +323,8 @@ $(function($) {
             return false;
         })
         .on('ca.currency.added', self.saveState)
+        .on('ca.currency.loaded', function() {
+        })
         .on('ca.currency.removed', function() {
             self.saveState();
             updateTotal();
@@ -308,6 +332,7 @@ $(function($) {
         .on('ca.currency.updated', '.currency', updateTotal)
         .on('ca.currency.price.updated', '.currency', updateTotal)
         .on('ca.trans.updated', '.transaction', self.saveState)
+        .on('ca.trans.date.changed', '.transaction', self.saveState)
         .on('ca.trans.removed', '.currency', updateTotal);
     }
 

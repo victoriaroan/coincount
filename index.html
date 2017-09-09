@@ -21,10 +21,11 @@
               <a class="navbar-brand" href="#">Coin Count</a>
             </div>
             <div id="navbar" class="navbar-collapse collapse">
-              <ul class="nav navbar-nav navbar-right">
-                <li><a href="" id="export-data">Export</a></li>
-                <li><a href="" id="refresh-prices">Refresh Prices</a></li>
-              </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="" id="about" data-toggle="modal" data-target="#about-dialog">About</a></li>
+                    <li><a href="" id="export-data" data-toggle="modal" data-target="#export-dialog">Import/Export</a></li>
+                    <li><a href="" id="refresh-prices">Refresh Prices</a></li>
+                </ul>
             </div><!--/.nav-collapse -->
           </div>
         </nav>
@@ -50,15 +51,54 @@
                         </thead>
                         <tfoot>
                             <td colspan="5" class="text-right">Total:</td>
-                            <td id="value-total">$<span class="number"></span></td>
-                            <td id="cost-total">$<span class="number"></span></td>
-                            <td colspan="3" id="net-total">$<span class="number"></span> (<span class="percent"></span>% gain)</td>
+                            <td id="value-total"><span class="number"></span></td>
+                            <td id="cost-total"><span class="number"></span></td>
+                            <td colspan="3" id="net-total"><span class="number"></span> (<span class="percent"></span>% gain)</td>
                         </tfoot>
 
                     </table>
                 </div>
             </form>
         </div>
+        <div id="about-dialog" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="about-header">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="about-header">About Coin Count</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Coin Count is a Javascript/HTML application to help you keep track of your cryptocurrency transactions and what your wallets are worth. Coin Count pulls data about cryptocurrencies from <a href="https://coinmarketcap.com/" target="_blank">Coin Market Cap</a>, which updates prices every five minutes.</p>
+                        <p>Coin Count saves your data in local <a href="https://en.wikipedia.org/wiki/Web_storage" target="_blank">web storage</a>. This means your data will be saved indefinitely, but is only available in the browser in which you saved it. It will be deleted if you clear your browser data. You can save your data by clicking the export button. This will export it in JSON format, which can then be imported back into the application.</p>
+                        <p>If you want to run the application locally or from a flash drive, you can download the files from <a href="">GitLab</a>. Just open the .html file in a browser.</p>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /about-dialog -->
+        <div id="export-dialog" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="export-header">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="export-header">Import/Export</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <h5>Export</h5>
+                                <p><strong>JSON</strong> - JSON export is used to save your application data outside of your browser and import it into another browser.</p>
+                                <p><strong>CSV</strong> - Export to CSV if you want to open your data in a spreadsheet. Each transaction will be its own row.</p>
+                            </div>
+                            <div class="col-sm-6">
+                                <h5>Import</h5>
+                                <p>Import requires a JSON file exported from the application.</p>
+                                <input type="file" name="json-import">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /export-dialog -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.8/handlebars.min.js" integrity="sha256-4d88O9e7pCb/y6LHNiCfPQAutcLvYzg+TdjCYR5bMr0=" crossorigin="anonymous"></script>
         <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
@@ -66,14 +106,14 @@
         <script id="currency-template" type="text/x-handlebars-template">
             <tbody id="id-{{currency_id}}" class="currency">
                 <tr class="header">
-                    <th class="expand"><a href="#" class="expand" title="Expand {{currency_name}} Transactions"><span class="fa fa-angle-right"></span></a></th>
+                    <th class="expand"><a href="#" class="expand" title="Collapse {{currency_name}} Transactions" aria-expanded="true"><span class="fa fa-angle-down"></span></a></th>
                     <th class="name" data-title="Name">{{currency_name}}</th>
                     <th class="symbol" data-title="Symbol">{{currency_symbol}}</th>
-                    <th class="price" data-title="Price">$<span class="number"></span></th>
+                    <th class="price" data-title="Price"><span class="number"></span></th>
                     <th class="balance" data-title="Balance"></th>
-                    <th class="value" data-title="Value">$<span class="number"></span></th>
-                    <th class="cost" data-title="Cost">$<span class="number"></span></th>
-                    <th class="net" data-title="Net">$<span class="number"></span> (<span class="percent"></span>% gain)</th>
+                    <th class="value" data-title="Value"><span class="number"></span></th>
+                    <th class="cost" data-title="Cost"><span class="number"></span></th>
+                    <th class="net" data-title="Net"><span class="number"></span> (<span class="percent"></span>% gain)</th>
                     <th></th>
                     <th class="actions text-right">
                         <a href="#" role="button" class="btn btn-success btn-xs add-transaction" title="Add {{currency_name}} Transaction" data-id="{{currency_id}}"><span class="fa fa-plus"></span></a>
@@ -85,7 +125,7 @@
         <script id="transaction-template" type="text/x-handlebars-template">
             <tr id="id-{{currency_id}}-{{transaction_id}}" class="transaction">
                 <td></td>
-                <td class="t-name">Transaction <span class="number">{{transaction_id}}</span></td>
+                <td class="t-name">Transaction <span class="t-id">{{transaction_id}}</span></td>
                 <td colspan="2"></td>
                 <td class="t-amount"><input type="number" value="" class="amount-input" data-id="{{currency_id}}"></td>
                 <td></td>

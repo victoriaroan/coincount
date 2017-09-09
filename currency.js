@@ -99,6 +99,17 @@ var Currency = function(id, name, symbol, state) {
     this.update();
 
     /** Events **/
+    this.element.on('click', 'a.expand', function() {
+        if ($(this).hasClass('collapsed')) {
+            self.showTransactions();
+            $(this).removeClass('collapsed').attr('aria-expanded', 'true');
+            $(this).find('span.fa').removeClass('fa-angle-right').addClass('fa-angle-down');
+        } else {
+            self.hideTransactions();
+            $(this).addClass('collapsed').attr('aria-expanded', 'false');
+            $(this).find('span.fa').removeClass('fa-angle-down').addClass('fa-angle-right');
+        }
+    })
     $(document).on('click', this.elementName + ' a.add-transaction', function() {
         self.addTransaction();
     });
@@ -133,7 +144,7 @@ $.extend(Currency.prototype, {
     updatePrice: function() {
         var self = this;
         self.getPrice('USD').done(function() {
-            self.element.find('.price .number').html(self.prices.usd);
+            self.element.find('.price .number').html(self.prices.usd.toFixed(2));
             self.updateValue();
             self.updateNet();
             self.element.trigger('ca.currency.price.updated');
@@ -161,12 +172,18 @@ $.extend(Currency.prototype, {
         this.update();
         this.element.trigger('ca.trans.removed');
     },
+    showTransactions: function() {
+        this.element.find('.transaction').show();
+    },
+    hideTransactions: function() {
+        this.element.find('.transaction').hide();
+    },
 
     getBalance: function() {
         return parseFloat(this.element.find('.balance').html() || 0);
     },
     updateBalance: function() {
-        var bal = 0;
+        var bal = 0.0;
         $.each(this.transactions, function(index, transaction) {
             bal += transaction.getAmount();
         });
@@ -198,8 +215,13 @@ $.extend(Currency.prototype, {
         var value = this.getValue();
         var cost = this.getCost();
         var net = (value - cost).toFixed(2);
-        this.element.find('.net .number').html(net);
-        this.element.find('.net .percent').html(parseInt(net / cost * 100) || 100);
+        if (net < 0) {
+            this.element.find('.net').addClass('loss');
+        } else {
+            this.element.find('.net').removeClass('loss');
+        }
+        this.element.find('.net .number').html(Math.abs(net));
+        this.element.find('.net .percent').html(parseFloat(net / cost * 100).toFixed(2) || 100);
     },
 
     update: function() {
@@ -276,13 +298,11 @@ $(function($) {
             costEle.html(cost.toFixed(2));
             var net = total - cost;
             netEle.html(net.toFixed(2));
-            gainEle.html(parseInt(net / cost * 100) || 100);
+            gainEle.html(parseFloat(net / cost * 100).toFixed(2) || 100);
         }
 
         self.loadState = function() {
             var state = JSON.parse(localStorage.getItem(storageId));
-            console.log(state);
-            // $('#currency-rows').empty();
             for (var currency in state) {
                 if (state.hasOwnProperty(currency)) {
                     addCurrency(currency, state[currency]);
@@ -291,7 +311,6 @@ $(function($) {
         }
 
         self.saveState = function() {
-            console.log(JSON.stringify(self.currencies));
             localStorage.setItem(storageId, JSON.stringify(self.currencies));
         }
 
@@ -333,7 +352,10 @@ $(function($) {
         .on('ca.currency.price.updated', '.currency', updateTotal)
         .on('ca.trans.updated', '.transaction', self.saveState)
         .on('ca.trans.date.changed', '.transaction', self.saveState)
-        .on('ca.trans.removed', '.currency', updateTotal);
+        .on('ca.trans.removed', '.currency', function() {
+            self.saveState();
+            updateTotal();
+        });
     }
 
     $currencyApp = $('#currency-form').currencies();

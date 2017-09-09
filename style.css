@@ -2,14 +2,33 @@ body {
     padding-top: 70px;
 }
 
+#currency-list {
+    margin-bottom: 10px;
+    text-align: right;
+}
+
 #currency-table thead th {
     background-color: #444;
     color: #efefef;
     text-transform: uppercase;
 }
 
+.number::before {
+    content: "$";
+}
+
+.loss {
+    color: red;
+}
+.loss .number::before {
+    content: "($";
+}
+.loss .number::after {
+    content: ")";
+}
+
 @media only screen and (max-width: 800px) {
-	#currency-table,
+	/*#currency-table,
 	#currency-table thead,
 	#currency-table tbody,
 	#currency-table th,
@@ -46,5 +65,5 @@ body {
 		font-weight: bold;
 	}
 
-	#currency-table td:before { content: attr(data-title); }
+	#currency-table td:before { content: attr(data-title); }*/
 }

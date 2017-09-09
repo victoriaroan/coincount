@@ -35,22 +35,22 @@ $.extend(Transaction.prototype, {
     toJSON: function() {
         return {
             id: this.id,
-            amount: this.getAmount(),
-            cost: this.getCost(),
+            amount: this.getAmount().toString(),
+            cost: this.getCost().toString(),
             date: this.getDate()
         }
     },
 
     /** Data Functions **/
     getAmount: function() {
-        return parseFloat(this.element.find('.amount-input').val() || 0);
+        return new Decimal(this.element.find('.amount-input').val() || 0);
     },
     setAmount: function(value) {
         this.element.find('.amount-input').val(value);
         this.element.trigger('ca.trans.updated');
     },
     getCost: function() {
-        return parseFloat(this.element.find('.cost-input').val() || 0);
+        return new Decimal(this.element.find('.cost-input').val() || 0);
     },
     setCost: function(value) {
         this.element.find('.cost-input').val(value);
@@ -134,7 +134,7 @@ $.extend(Currency.prototype, {
         return $.ajax({
             url: this.tickerUrl + '?convert=' + symbol
         }).done(function(data) {
-            self.prices[symbol.toLowerCase()] = parseFloat(data[0]['price_' + symbol.toLowerCase()]);
+            self.prices[symbol.toLowerCase()] = new Decimal(data[0]['price_' + symbol.toLowerCase()]);
         }).fail(function(jqXHR, textStatus, errorThrown) {
             console.log(jqXHR);
             console.log(textStatus);
@@ -180,48 +180,53 @@ $.extend(Currency.prototype, {
     },
 
     getBalance: function() {
-        return parseFloat(this.element.find('.balance').html() || 0);
+        return new Decimal(this.element.find('.balance').html() || 0);
     },
     updateBalance: function() {
-        var bal = 0.0;
+        var bal = new Decimal(0);
         $.each(this.transactions, function(index, transaction) {
-            bal += transaction.getAmount();
+            bal = bal.plus(transaction.getAmount());
         });
-        this.element.find('.balance').html(bal);
+        this.element.find('.balance').html(bal.toString());
     },
 
     getCost: function() {
-        return parseFloat(this.element.find('.cost .number').html() || 0);
+        return new Decimal(this.element.find('.cost .number').html() || 0);
     },
     updateCost: function(value) {
-        var cost = 0;
+        var cost = new Decimal(0);
         $.each(this.transactions, function(index, transaction) {
-            cost += transaction.getCost();
+            cost = cost.plus(transaction.getCost());
         });
-        this.element.find('.cost .number').html(cost);
+        this.element.find('.cost .number').html(cost.toString());
     },
 
     getValue: function() {
-        return parseFloat(this.element.find('.value .number').html() || 0);
+        return new Decimal(this.element.find('.value .number').html() || 0);
     },
     updateValue: function() {
-        this.element.find('.value .number').html((this.prices.usd * this.getBalance()).toFixed(2));
+        this.element.find('.value .number').html(this.getBalance().times(this.prices.usd).toFixed(2));
     },
 
     getNet: function() {
-        return parseFloat(this.element.find('.net .number').html() || 0);
+        return new Decimal(this.element.find('.net .number').html() || 0);
     },
     updateNet: function() {
         var value = this.getValue();
         var cost = this.getCost();
-        var net = (value - cost).toFixed(2);
-        if (net < 0) {
+        var net = value.minus(cost);
+        // var net = (value - cost).toFixed(2);
+        if (net.lt(0)) {
             this.element.find('.net').addClass('loss');
         } else {
             this.element.find('.net').removeClass('loss');
         }
-        this.element.find('.net .number').html(Math.abs(net));
-        this.element.find('.net .percent').html(parseFloat(net / cost * 100).toFixed(2) || 100);
+        this.element.find('.net .number').html(net.abs().toString());
+        if (cost.eq(0)) {
+            this.element.find('.net .percent').html(100);
+        } else {
+            this.element.find('.net .percent').html(net.div(cost).times(100).toFixed(2));
+        }
     },
 
     update: function() {
@@ -284,21 +289,17 @@ $(function($) {
         }
 
         var updateTotal = function() {
-            var totalEle = $('#value-total .number');
-            var costEle = $('#cost-total .number');
-            var netEle = $('#net-total .number');
-            var gainEle = $('#net-total .percent');
-            var total = 0.0;
-            var cost = 0.0;
+            var total = new Decimal(0);
+            var cost = new Decimal(0);
             $.each(self.currencies, function() {
-                total += this.getValue();
-                cost += this.getCost();
+                total = total.plus(this.getValue());
+                cost = cost.plus(this.getCost());
             });
-            totalEle.html(total.toFixed(2));
-            costEle.html(cost.toFixed(2));
-            var net = total - cost;
-            netEle.html(net.toFixed(2));
-            gainEle.html(parseFloat(net / cost * 100).toFixed(2) || 100);
+            var net = total.minus(cost);
+            $('#value-total .number').html(total.toFixed(2));
+            $('#cost-total .number').html(cost.toFixed(2));
+            $('#net-total .number').html(net.toFixed(2));
+            $('#net-total .percent').html(net.div(cost).times(100).toFixed(2) || 100);
         }
 
         self.loadState = function() {

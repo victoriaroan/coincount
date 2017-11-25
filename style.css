@@ -13,6 +13,11 @@ body {
     text-transform: uppercase;
 }
 
+#currency-table tfoot tr {
+    background-color: #eee;
+    font-weight: bold;
+}
+
 .number::before {
     content: "$";
 }

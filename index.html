@@ -38,22 +38,26 @@
                 <div class="table-responsive">
                     <table id="currency-table" class="table">
                         <thead>
-                            <th id="th-expand"></th>
-                            <th id="th-name">Name</th>
-                            <th id="th-symbol">Symbol</th>
-                            <th id="th-price">Price</th>
-                            <th id="th-balance">Balance</th>
-                            <th id="th-value">Value</th>
-                            <th id="th-cost">Cost</th>
-                            <th id="th-net">Net</th>
-                            <th id="th-date">Date</th>
-                            <th id="th-actions"></th>
+                            <tr>
+                                <th id="th-expand"></th>
+                                <th id="th-name">Name</th>
+                                <th id="th-symbol">Symbol</th>
+                                <th id="th-price">Price</th>
+                                <th id="th-balance">Balance</th>
+                                <th id="th-value">Value</th>
+                                <th id="th-cost">Cost</th>
+                                <th id="th-net">Net</th>
+                                <th id="th-date">Date</th>
+                                <th id="th-actions"></th>
+                            </tr>
                         </thead>
                         <tfoot>
-                            <td colspan="5" class="text-right">Total:</td>
-                            <td id="value-total"><span class="number"></span></td>
-                            <td id="cost-total"><span class="number"></span></td>
-                            <td colspan="3" id="net-total"><span class="number"></span> (<span class="percent"></span>% gain)</td>
+                            <tr>
+                                <th scope="row" colspan="5" class="text-right">Total:</td>
+                                <td id="value-total"><span class="number"></span></td>
+                                <td id="cost-total"><span class="number"></span></td>
+                                <td colspan="3" id="net-total"><span class="number"></span> (<span class="percent"></span>% gain)</td>
+                            </tr>
                         </tfoot>
 
                     </table>

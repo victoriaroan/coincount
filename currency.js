@@ -79,6 +79,7 @@ var Currency = function(id, name, symbol, state) {
     this.transactions = [];
     this.lastTransactionId = 0;
     this.elementName = '#id-' + this.id;
+    this.expanded = true;
 
     this.element = $(template({
         currency_id: this.id,
@@ -92,6 +93,10 @@ var Currency = function(id, name, symbol, state) {
         for (var i = 0; i < state.transactions.length; i++) {
             this.addTransaction(state.transactions[i]);
         }
+        self.expanded = state.expanded;
+        if (!self.expanded) {
+            self.hideTransactions(self.element.find('a.expand'));
+        }
     } else {
         this.addTransaction();
     }
@@ -101,13 +106,9 @@ var Currency = function(id, name, symbol, state) {
     /** Events **/
     this.element.on('click', 'a.expand', function() {
         if ($(this).hasClass('collapsed')) {
-            self.showTransactions();
-            $(this).removeClass('collapsed').attr('aria-expanded', 'true');
-            $(this).find('span.fa').removeClass('fa-angle-right').addClass('fa-angle-down');
+            self.showTransactions($(this));
         } else {
-            self.hideTransactions();
-            $(this).addClass('collapsed').attr('aria-expanded', 'false');
-            $(this).find('span.fa').removeClass('fa-angle-down').addClass('fa-angle-right');
+            self.hideTransactions($(this));
         }
     })
     $(document).on('click', this.elementName + ' a.add-transaction', function() {
@@ -172,11 +173,19 @@ $.extend(Currency.prototype, {
         this.update();
         this.element.trigger('ca.trans.removed');
     },
-    showTransactions: function() {
+    showTransactions: function(button) {
+        this.expanded = true;
         this.element.find('.transaction').show();
+        button.removeClass('collapsed').attr('aria-expanded', 'true');
+        button.find('span.fa').removeClass('fa-angle-right').addClass('fa-angle-down');
+        this.element.trigger('ca.currency.expanded');
     },
-    hideTransactions: function() {
+    hideTransactions: function(button) {
+        this.expanded = false;
         this.element.find('.transaction').hide();
+        button.addClass('collapsed').attr('aria-expanded', 'false');
+        button.find('span.fa').removeClass('fa-angle-down').addClass('fa-angle-right');
+        this.element.trigger('ca.currency.collapsed');
     },
 
     getBalance: function() {
@@ -239,7 +248,8 @@ $.extend(Currency.prototype, {
     toJSON: function() {
         return {
             lastTransactionId: this.lastTransactionId,
-            transactions: this.transactions
+            transactions: this.transactions,
+            expanded: this.expanded
         }
     }
 });
@@ -349,6 +359,8 @@ $(function($) {
             self.saveState();
             updateTotal();
         })
+        .on('ca.currency.collapsed', '.currency', self.saveState)
+        .on('ca.currency.expanded', '.currency', self.saveState)
         .on('ca.currency.updated', '.currency', updateTotal)
         .on('ca.currency.price.updated', '.currency', updateTotal)
         .on('ca.trans.updated', '.transaction', self.saveState)
